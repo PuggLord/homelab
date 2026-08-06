@@ -8,3 +8,4 @@ secrets/
 authorized_keys
 .claude-flow/
 .claude/
+node_modules/

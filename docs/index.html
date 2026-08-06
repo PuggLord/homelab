@@ -5,8 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>six seams. a homelab, and where it came apart</title>
 <meta name="description" content="A small computer on a shelf runs a language model that answers from anywhere and to nobody else. Six times it stopped, and every one was a seam between two layers that were each fine.">
-<link rel="preload" href="img/machine-night.webp" as="image" fetchpriority="high">
+<link rel="preload" as="image" fetchpriority="high"
+      href="img/machine-night.webp"
+      imagesrcset="img/machine-night-760.webp 760w, img/machine-night-1100.webp 1100w, img/machine-night.webp 1400w"
+      imagesizes="100vw">
 <link rel="preload" href="fonts/petrona-300.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230e0c0a'/%3E%3Ccircle cx='16' cy='16' r='7' fill='%23c8853f'/%3E%3C/svg%3E">
+<script>
+  /* Hide only what is about to be animated, and only while the animation code
+     is still on its way. The timer is the guarantee: if that code never lands,
+     the text appears anyway. Nothing on this page depends on script to exist. */
+  document.documentElement.classList.add('anim');
+  window.__revealFallback = setTimeout(function () {
+    document.documentElement.classList.remove('anim');
+  }, 3500);
+</script>
 <style>
   @font-face{font-family:Petrona;src:url(fonts/petrona-300.woff2)format("woff2");font-weight:300;font-display:swap}
   @font-face{font-family:Hanken;src:url(fonts/hanken-400.woff2)format("woff2");font-weight:400;font-display:swap}
@@ -30,7 +43,7 @@
     --r:2px;
   }
   *{box-sizing:border-box}
-  html{-webkit-text-size-adjust:100%}
+  html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
   body{
     margin:0;background:var(--room);color:var(--bone-2);
     font-family:Hanken,ui-sans-serif,system-ui,sans-serif;
@@ -47,70 +60,134 @@
     font-family:Petrona,Georgia,serif;font-weight:300;color:var(--bone);
     letter-spacing:normal;text-transform:none;margin:0;
   }
-  h1{font-size:26px;line-height:1.35;max-width:26rem}
   h2{font-size:22px;line-height:1.4;margin:0 0 1rem}
   h3{font-size:19px;line-height:1.45;margin:0 0 .35rem}
   .note{font-size:15px;color:var(--bone-3);max-width:32rem}
-  .mark{font-size:13px;font-weight:500;color:var(--bone-3)}
 
   /* ---------- opening plate ---------- */
-  .plate{position:relative;min-height:76vh;display:grid;align-items:end}
+  .plate{position:relative;min-height:86vh;display:grid;align-items:end;overflow:hidden}
   .plate img{
     position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-    object-position:center 42%;z-index:0;
+    object-position:center 42%;z-index:0;transform-origin:52% 46%;
   }
   .plate::after{
     content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
-    background:linear-gradient(180deg,rgba(14,12,10,.55) 0%,rgba(14,12,10,.10) 38%,rgba(14,12,10,.94) 88%,var(--room) 100%);
+    background:linear-gradient(180deg,rgba(14,12,10,.55) 0%,rgba(14,12,10,.10) 34%,rgba(14,12,10,.94) 86%,var(--room) 100%);
   }
-  .plate .wide{position:relative;z-index:2;padding-bottom:3.5rem;padding-top:6rem}
-  .plate p{margin-top:1rem;color:var(--bone-2)}
+  .plate .wide{position:relative;z-index:2;padding-bottom:3.5rem;padding-top:7rem}
+  /* The lamp-lit edge of the shelf is the brightest thing in the photograph and
+     the headline lands right on it. Darkening the whole image to fix that would
+     throw away the picture, so the scrim covers only the band the type occupies
+     and lets the rest of the frame keep its light. */
+  .plate .wide::before{
+    /* full bleed, not container width: stopping at the column edge cuts a
+       visible vertical line straight across the shelf */
+    content:"";position:absolute;left:-100vw;right:-100vw;top:2.5rem;bottom:-1px;z-index:-1;
+    background:linear-gradient(180deg,
+      rgba(14,12,10,0) 0%,rgba(14,12,10,.62) 16%,
+      rgba(14,12,10,.86) 42%,rgba(14,12,10,.93) 100%);
+  }
+  /* one display moment on the page. everything after it stays quiet. */
+  h1{font-size:clamp(31px,5.4vw,55px);line-height:1.2;max-width:15ch;padding-bottom:.06em}
+  /* The second sentence is its own element rather than a span inside the h1.
+     Splitting the h1 into animatable lines rewraps everything it contains, and
+     doing that to a 21px sentence sitting inside a 55px block gives it the
+     55px leading. Keeping them separate keeps each one's own measure. */
+  .sub{
+    font-family:Hanken,sans-serif;font-weight:400;color:var(--bone);
+    font-size:clamp(17px,1.9vw,21px);line-height:1.5;margin:1.15rem 0 0;max-width:33rem;
+  }
+  .plate p.note{margin-top:1.4rem;color:var(--bone-2)}
+  .anim #lead,.anim .sub,.anim .plate-note{opacity:0}
 
   /* ---------- the reach control ---------- */
-  .reach{padding:4.5rem 0 1rem}
+  /* padding-block, not padding: the shorthand here would silently wipe the
+     horizontal padding these sections inherit from .col and .wide, and put
+     every line of body text flush against the edge of a phone. */
+  .reach{padding-block:5rem 1rem}
   .switch{display:flex;gap:0;border:1px solid var(--line);border-radius:var(--r);width:fit-content;margin:0 0 2rem}
   .switch button{
     font:inherit;font-size:15px;font-weight:500;padding:.55rem 1.1rem;cursor:pointer;
     background:transparent;color:var(--bone-3);border:0;border-radius:0;
-    transition:color .18s,background .18s;
+    transition:color .2s,background .2s;
   }
+  .switch button:hover{color:var(--bone-2)}
   .switch button[aria-pressed="true"]{background:var(--room-2);color:var(--bone)}
   .switch button:first-child[aria-pressed="true"]{color:var(--cold)}
   .switch button:last-child[aria-pressed="true"]{color:var(--amber)}
 
   /* ---------- the elevation ---------- */
-  #stage svg{width:100%;height:auto;display:block}
+  /* The drawing is 900 units wide and its smallest label is 12. Scaled into a
+     phone that label lands near five pixels, which is not a label. So below the
+     width where it stays legible the drawing keeps a real size and scrolls
+     inside its own box, rather than shrinking until it is decoration. */
+  .canvas{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+  .canvas svg{width:100%;height:auto;display:block}
+  @media (max-width:52rem){
+    .canvas svg{min-width:44rem}
+    .canvas{padding-bottom:.4rem}
+  }
   .verdict{
     font-family:Petrona,Georgia,serif;font-size:22px;font-weight:300;color:var(--bone);
-    margin:1.5rem 0 0;min-height:3.2em;max-width:34rem;line-height:1.45;
+    margin:1.5rem 0 0;min-height:3.4em;max-width:34rem;line-height:1.45;
   }
   .verdict span{color:var(--bone-3);font-family:Hanken,sans-serif;font-size:15px;display:block;margin-top:.4rem}
 
-  /* svg state */
-  .seal{display:none}
-  [data-state="outside"] .seal{display:block}
-  [data-state="outside"] .inner{opacity:.16}
-  [data-state="outside"] .link-live{opacity:.12}
-  [data-state="outside"] .svc-dot{fill:var(--bone-3)}
-  .seams{transition:opacity .3s}
-  [data-state="outside"] .seams{opacity:.22}
-  .inner,.link-live,.svc-dot{transition:opacity .3s,fill .3s}
+  /* Without JS the drawing is simply complete and the seal is absent, which is
+     the true resting state. Every hidden-then-revealed value below is set by
+     script, never by this stylesheet. */
+  .seal{pointer-events:none}
+  .seal-panel,.seal-txt{opacity:0}
   .stroke{fill:none;stroke-width:1}
   .s-line{stroke:var(--line)}
   .s-cold{stroke:var(--cold-dim)}
   .s-amber{stroke:var(--amber-dim)}
-  .t{font-family:Hanken,sans-serif;font-size:11.5px;fill:var(--bone-3)}
-  .t-b{font-family:Hanken,sans-serif;font-size:12.5px;font-weight:500;fill:var(--bone-2)}
-  .seam-n{font-family:Hanken,sans-serif;font-size:10.5px;font-weight:500;fill:var(--room)}
+  .t{font-family:Hanken,sans-serif;font-size:12.5px;fill:var(--bone-3)}
+  .t-b{font-family:Hanken,sans-serif;font-size:13.5px;font-weight:500;fill:var(--bone-2)}
+  .seam-n{font-family:Hanken,sans-serif;font-size:11px;font-weight:500;fill:var(--room)}
+  .mk{transform-box:fill-box;transform-origin:center;cursor:pointer}
+  #link-pulse{stroke:var(--cold);stroke-width:1.5;fill:none;stroke-dasharray:2 10;stroke-linecap:round;opacity:0}
+
+  /* ---------- the seam spine ---------- */
+  /* Six marks in order, because there are exactly six and their order is the
+     order they are read in. Hidden below the width where it would crowd. */
+  .spine{display:none}
+  @media (min-width:75rem){
+    .spine{
+      display:block;position:fixed;top:50%;transform:translateY(-50%);
+      left:calc(50% - 30.5rem);z-index:5;opacity:0;transition:opacity .4s;
+    }
+    .spine.live{opacity:1}
+    .spine ol{list-style:none;margin:0;padding:0}
+    .spine .rail{position:relative}
+    .spine .track{position:absolute;left:5px;top:1.3rem;bottom:1.3rem;width:1px;background:var(--line)}
+    .spine .fill{position:absolute;left:5px;top:1.3rem;width:1px;height:0;background:var(--amber);opacity:.55;transition:height .45s cubic-bezier(.2,.7,.3,1)}
+    .spine li{position:relative;height:2.6rem}
+    .spine a{
+      display:flex;align-items:center;gap:.7rem;text-decoration:none;color:var(--bone-3);
+      font-size:12.5px;font-weight:500;position:relative;height:100%;
+    }
+    .spine i{
+      width:11px;height:11px;border-radius:50%;flex:0 0 11px;
+      background:var(--room);border:1px solid var(--line);display:block;
+    }
+    .spine a em{
+      font-style:normal;white-space:nowrap;opacity:0;font-size:12px;color:var(--bone-3);
+      transform:translateX(-4px);transition:opacity .22s,transform .22s;
+    }
+    .spine a:hover em,.spine a:focus-visible em,.spine li.on a em{opacity:1;transform:none}
+    .spine li.on i{background:var(--amber);border-color:var(--amber)}
+    .spine li.on a em{color:var(--bone-2)}
+  }
 
   /* ---------- the index ---------- */
-  .index{padding:4.5rem 0 2rem}
-  .inc{display:grid;grid-template-columns:2.1rem minmax(0,1fr);gap:0 1.15rem;padding:1.6rem 0;border-top:1px solid var(--line)}
+  .index{padding-block:5rem 2rem}
+  .inc{display:grid;grid-template-columns:2.1rem minmax(0,1fr);gap:0 1.15rem;padding:1.9rem 0;border-top:1px solid var(--line);scroll-margin-top:4rem}
   .inc>div{min-width:0}
   .inc:first-of-type{border-top:0}
   .inc-n{
     font-family:Petrona,Georgia,serif;font-size:22px;font-weight:300;color:var(--amber);
-    line-height:1.3;padding-top:.05rem
+    line-height:1.3;padding-top:.05rem;transform-origin:left center
   }
   .inc-seam{font-size:13px;font-weight:500;color:var(--cold);margin:0 0 .55rem}
   .inc p{margin:0 0 .7rem;font-size:16px}
@@ -125,7 +202,7 @@
   pre b{font-weight:500;color:var(--bone)}
 
   /* ---------- closing ---------- */
-  .close{padding:3rem 0 5rem}
+  .close{padding-block:3rem 5rem}
   .close figure{margin:0 0 2rem}
   .close img{width:100%;height:auto;display:block;border-radius:var(--r)}
   .close figcaption{font-size:15px;color:var(--bone-3);margin-top:.75rem;max-width:32rem}
@@ -134,27 +211,33 @@
 
   @media (max-width:34rem){
     body{font-size:16px}
-    h1{font-size:23px}
     .inc{grid-template-columns:1.6rem 1fr;gap:0 .8rem}
-    .plate{min-height:66vh}
+    .plate{min-height:74vh}
+    .plate .wide{padding-top:5rem}
   }
   @media (prefers-reduced-motion:reduce){
-    *{transition:none!important}
+    html{scroll-behavior:auto}
+    *{transition:none!important;animation:none!important}
   }
 </style>
 </head>
 <body>
 
 <section class="plate">
-  <img src="img/machine-night.webp" fetchpriority="high" decoding="async" alt="A small black desktop computer on a dark wooden shelf at night, lit by a low warm lamp from off-frame, one cold blue indicator on its front panel." width="1400" height="875">
+  <!-- The plate is full bleed, so a phone asks for a phone-sized plate. -->
+  <img id="plate-img" src="img/machine-night.webp"
+       srcset="img/machine-night-760.webp 760w, img/machine-night-1100.webp 1100w, img/machine-night.webp 1400w"
+       sizes="100vw"
+       fetchpriority="high" alt="A small black desktop computer on a dark wooden shelf at night, lit by a low warm lamp from off-frame, one cold blue indicator on its front panel." width="1400" height="875">
   <div class="wide">
-    <h1>A language model runs on this shelf. From the internet, this house has no open ports at all.</h1>
-    <p class="note">
+    <h1 id="lead">A language model runs on this shelf.</h1>
+    <p class="sub">From the internet, this house has no open ports at all.</p>
+    <p class="note plate-note">
       One small computer, a hypervisor, one virtual machine, three services. It answers
       from another state and it answers to nobody else, because reaching it is a property
       of the network rather than of a password.
     </p>
-    <p class="note">Six times it stopped. Every one was a seam.</p>
+    <p class="note plate-note">Six times it stopped. Every one was a seam.</p>
   </div>
 </section>
 
@@ -172,75 +255,107 @@
   </div>
 
   <div id="stage" data-state="inside">
-    <svg viewBox="0 0 900 396" role="img" aria-labelledby="elev-t">
+   <div class="canvas">
+    <svg id="elev" viewBox="0 66 900 330" role="img" aria-labelledby="elev-t">
       <title id="elev-t">An elevation. A shelf carries a hypervisor, a virtual machine above it, and three services above that. A drawn envelope encloses that cluster and a laptop far to the right, and nothing else. Six numbered marks sit on the joins where each failure happened.</title>
 
-      <text class="t" x="876" y="26" text-anchor="end" fill="#7d7568">the public internet</text>
-      <text class="t" x="876" y="42" text-anchor="end" fill="#5f5850">everything outside the envelope</text>
-
-      <!-- the mesh: encloses the house cluster and the laptop, and nothing else -->
-      <g class="mesh-env">
-        <rect class="stroke s-cold" x="34" y="96" width="392" height="284" rx="3"/>
-        <rect class="stroke s-cold" x="700" y="176" width="176" height="72" rx="3"/>
-        <path class="stroke s-cold link-live" d="M426 210 H 700"/>
-      </g>
-      <text class="t" x="34" y="86" fill="#7fa8c4">the mesh. an encrypted graph, and the only way in</text>
-
-      <g class="seal">
-        <rect x="34" y="96" width="392" height="284" fill="#0e0c0a" opacity=".95"/>
-        <rect x="700" y="176" width="176" height="72" fill="#0e0c0a" opacity=".95"/>
-        <rect x="426" y="206" width="274" height="9" fill="#0e0c0a" opacity=".95"/>
-        <text x="230" y="216" text-anchor="middle" font-family="Petrona,Georgia,serif" font-size="19" font-weight="300" fill="#c8853f">nothing here answers you</text>
-        <text class="t" x="230" y="240" text-anchor="middle">no address resolves, no port is open</text>
-        <text class="t" x="788" y="216" text-anchor="middle">and no route in</text>
+      <!-- sits in the void between the two enclosures, which is the only part
+           of this drawing that is actually the public internet -->
+      <g id="l-out">
+        <text class="t" x="876" y="122" text-anchor="end" fill="#7d7568">the public internet</text>
+        <text class="t" x="876" y="140" text-anchor="end" fill="#5f5850">everything outside the envelope</text>
       </g>
 
-      <g class="inner">
-        <!-- services -->
-        <rect class="stroke s-line" x="70" y="118" width="320" height="52" rx="2"/>
-        <circle class="svc-dot" cx="86" cy="138" r="3" fill="#7fa8c4"/>
-        <text class="t-b" x="98" y="142">llama-server</text>
-        <text class="t" x="98" y="159">an 8B model, cpu only, on loopback and the mesh</text>
+      <g id="l-inner">
+        <!-- drawn bottom up, in the order the stack actually comes alive -->
+        <g id="l-shelf">
+          <line class="stroke s-amber dr" x1="70" y1="344" x2="390" y2="344" stroke-width="1.5"/>
+          <text class="t lb" x="70" y="364" fill="#7d7568">a wooden shelf in a living room</text>
+        </g>
 
-        <!-- vm -->
-        <rect class="stroke s-line" x="70" y="200" width="320" height="52" rx="2"/>
-        <text class="t-b" x="86" y="224">dockerser1</text>
-        <text class="t" x="86" y="241">Debian 13, 16 GB, 8 cores, two disks</text>
+        <g id="l-host">
+          <rect class="stroke s-line dr" x="70" y="282" width="320" height="52" rx="2"/>
+          <text class="t-b lb" x="86" y="306">pve</text>
+          <text class="t lb" x="86" y="323">Dell OptiPlex, i5-10500T, Proxmox 9.1.1</text>
+        </g>
 
-        <!-- host -->
-        <rect class="stroke s-line" x="70" y="282" width="320" height="52" rx="2"/>
-        <text class="t-b" x="86" y="306">pve</text>
-        <text class="t" x="86" y="323">Dell OptiPlex, i5-10500T, Proxmox 9.1.1</text>
+        <line id="j-1" class="stroke s-line dr" x1="230" y1="282" x2="230" y2="252"/>
 
-        <!-- shelf -->
-        <line class="stroke s-amber" x1="70" y1="344" x2="390" y2="344" stroke-width="1.5"/>
-        <text class="t" x="70" y="364" fill="#7d7568">a wooden shelf in a living room</text>
+        <g id="l-vm">
+          <rect class="stroke s-line dr" x="70" y="200" width="320" height="52" rx="2"/>
+          <text class="t-b lb" x="86" y="224">dockerser1</text>
+          <text class="t lb" x="86" y="241">Debian 13, 16 GB, 8 cores, two disks</text>
+        </g>
 
-        <!-- the two joins, drawn as the seams they are -->
-        <line class="stroke s-line" x1="230" y1="282" x2="230" y2="252"/>
-        <line class="stroke s-line" x1="230" y1="200" x2="230" y2="170"/>
+        <line id="j-2" class="stroke s-line dr" x1="230" y1="200" x2="230" y2="170"/>
 
-        <!-- laptop -->
-        <g class="link-live">
-          <text class="t-b" x="716" y="206">a laptop</text>
-          <text class="t" x="716" y="223">anywhere, on the same mesh</text>
+        <g id="l-svc">
+          <rect class="stroke s-line dr" x="70" y="118" width="320" height="52" rx="2"/>
+          <circle class="svc-dot lb" cx="86" cy="138" r="3" fill="#7fa8c4"/>
+          <text class="t-b lb" x="98" y="142">llama-server</text>
+          <text class="t lb" x="98" y="159">an 8B model, cpu only, on loopback and the mesh</text>
+        </g>
+
+        <!-- the mesh: encloses the house cluster and the laptop, and nothing else -->
+        <g id="l-mesh">
+          <rect class="stroke s-cold dr" x="34" y="96" width="392" height="284" rx="3"/>
+          <rect class="stroke s-cold dr" x="672" y="176" width="204" height="72" rx="3"/>
+          <text class="t lb" x="34" y="86" fill="#7fa8c4">the mesh. an encrypted graph, and the only way in</text>
+        </g>
+
+        <g id="l-link">
+          <path id="link" class="stroke s-cold" d="M426 210 H 672"/>
+          <path id="link-pulse" d="M426 210 H 672"/>
+        </g>
+
+        <g id="l-laptop">
+          <text class="t-b lb" x="690" y="206">a laptop</text>
+          <text class="t lb" x="690" y="224">anywhere, on the same mesh</text>
+        </g>
+      </g>
+
+      <!-- the seal. drawn over everything, revealed only from outside -->
+      <g class="seal" id="l-seal" aria-hidden="true">
+        <rect class="seal-panel" x="34" y="96" width="392" height="284" fill="#0e0c0a"/>
+        <rect class="seal-panel" x="672" y="176" width="204" height="72" fill="#0e0c0a"/>
+        <rect class="seal-panel" x="426" y="204" width="248" height="13" fill="#0e0c0a"/>
+        <g class="seal-txt">
+          <text x="230" y="216" text-anchor="middle" font-family="Petrona,Georgia,serif" font-size="19" font-weight="300" fill="#c8853f">nothing here answers you</text>
+          <text class="t" x="230" y="240" text-anchor="middle">no address resolves, no port is open</text>
+          <text class="t" x="774" y="216" text-anchor="middle">and no route in</text>
         </g>
       </g>
 
       <!-- seam marks, each sitting on the join it names -->
-      <g class="seams">
-        <circle cx="230" cy="267" r="9" fill="#c8853f"/><text class="seam-n" x="230" y="271" text-anchor="middle">1</text>
-        <circle cx="206" cy="267" r="9" fill="#c8853f"/><text class="seam-n" x="206" y="271" text-anchor="middle">2</text>
-        <circle cx="390" cy="212" r="9" fill="#c8853f"/><text class="seam-n" x="390" y="216" text-anchor="middle">3</text>
-        <circle cx="390" cy="240" r="9" fill="#c8853f"/><text class="seam-n" x="390" y="244" text-anchor="middle">4</text>
-        <circle cx="563" cy="210" r="9" fill="#c8853f"/><text class="seam-n" x="563" y="214" text-anchor="middle">5</text>
-        <circle cx="700" cy="212" r="9" fill="#c8853f"/><text class="seam-n" x="700" y="216" text-anchor="middle">6</text>
+      <g id="l-seams">
+        <!-- 1 and 2 are both the host/guest join, so they sit either side of it -->
+        <g class="mk" data-n="1"><circle cx="211" cy="267" r="9" fill="#c8853f"/><text class="seam-n" x="211" y="271" text-anchor="middle">1</text></g>
+        <g class="mk" data-n="2"><circle cx="249" cy="267" r="9" fill="#c8853f"/><text class="seam-n" x="249" y="271" text-anchor="middle">2</text></g>
+        <g class="mk" data-n="3"><circle cx="390" cy="212" r="9" fill="#c8853f"/><text class="seam-n" x="390" y="216" text-anchor="middle">3</text></g>
+        <g class="mk" data-n="4"><circle cx="390" cy="240" r="9" fill="#c8853f"/><text class="seam-n" x="390" y="244" text-anchor="middle">4</text></g>
+        <g class="mk" data-n="5"><circle cx="549" cy="210" r="9" fill="#c8853f"/><text class="seam-n" x="549" y="214" text-anchor="middle">5</text></g>
+        <g class="mk" data-n="6"><circle cx="672" cy="212" r="9" fill="#c8853f"/><text class="seam-n" x="672" y="216" text-anchor="middle">6</text></g>
       </g>
     </svg>
+   </div>
 
     <p class="verdict" id="verdict"></p>
   </div>
 </section>
+
+<nav class="spine" aria-label="The six seams">
+ <div class="rail">
+  <span class="track"></span><span class="fill" id="spine-fill"></span>
+  <ol>
+    <li><a href="#seam-1"><i></i><em>host cpu, guest cpu</em></a></li>
+    <li><a href="#seam-2"><i></i><em>hypervisor up, guest off</em></a></li>
+    <li><a href="#seam-3"><i></i><em>inside, with nothing listening</em></a></li>
+    <li><a href="#seam-4"><i></i><em>the disk with the space</em></a></li>
+    <li><a href="#seam-5"><i></i><em>the policy, not the machine</em></a></li>
+    <li><a href="#seam-6"><i></i><em>the client nobody suspected</em></a></li>
+  </ol>
+ </div>
+</nav>
 
 <section class="index col">
   <h2>Six seams</h2>
@@ -250,7 +365,7 @@
     on the drawing.
   </p>
 
-  <div class="inc">
+  <div class="inc" id="seam-1">
     <div class="inc-n">1</div>
     <div>
       <p class="inc-seam">between the host processor and the one the guest was shown</p>
@@ -263,7 +378,7 @@
     </div>
   </div>
 
-  <div class="inc">
+  <div class="inc" id="seam-2">
     <div class="inc-n">2</div>
     <div>
       <p class="inc-seam">between a hypervisor that came back and a guest that did not</p>
@@ -275,7 +390,7 @@
     </div>
   </div>
 
-  <div class="inc">
+  <div class="inc" id="seam-3">
     <div class="inc-n">3</div>
     <div>
       <p class="inc-seam">inside the guest, with nothing left to talk to it</p>
@@ -290,7 +405,7 @@ qm start 100</pre>
     </div>
   </div>
 
-  <div class="inc">
+  <div class="inc" id="seam-4">
     <div class="inc-n">4</div>
     <div>
       <p class="inc-seam">between the disk with the space and the disk being written to</p>
@@ -302,7 +417,7 @@ qm start 100</pre>
     </div>
   </div>
 
-  <div class="inc">
+  <div class="inc" id="seam-5">
     <div class="inc-n">5</div>
     <div>
       <p class="inc-seam">at the boundary, in the policy rather than the machine</p>
@@ -314,7 +429,7 @@ qm start 100</pre>
     </div>
   </div>
 
-  <div class="inc">
+  <div class="inc" id="seam-6">
     <div class="inc-n">6</div>
     <div>
       <p class="inc-seam">at the far end, in the client nobody suspected</p>
@@ -338,28 +453,21 @@ qm start 100</pre>
   </div>
 </section>
 
-<script>
-  var stage = document.getElementById("stage");
-  var vIn = document.getElementById("b-in");
-  var vOut = document.getElementById("b-out");
-  var verdict = document.getElementById("verdict");
-
-  var COPY = {
-    inside: ["Three services answer, and the address stays put whatever the broadband does.",
-             "Access control is the network's job here, which is why an unauthenticated model endpoint is a reasonable thing to run."],
-    outside:["The same three services, from anywhere else. There is no port to knock on.",
-             "This is what a scanner sees, and it is why the router forwards nothing."]
-  };
-
-  function set(state){
-    stage.setAttribute("data-state", state);
-    vIn.setAttribute("aria-pressed", String(state === "inside"));
-    vOut.setAttribute("aria-pressed", String(state === "outside"));
-    verdict.innerHTML = COPY[state][0] + "<span>" + COPY[state][1] + "</span>";
+<script type="module">
+  /* The animation code and its library are ~30KB gzipped and none of it is
+     needed until the photograph has finished arriving. Holding the import
+     until then keeps it out of the race for the largest paint on a slow
+     connection. If it fails, the head's fallback timer reveals the text. */
+  const img = document.getElementById('plate-img');
+  const go  = () => import('./app.js').catch(() => {
+    clearTimeout(window.__revealFallback);
+    document.documentElement.classList.remove('anim');
+  });
+  if (img.complete) go();
+  else {
+    img.addEventListener('load',  go, { once: true });
+    img.addEventListener('error', go, { once: true });
   }
-  vIn.addEventListener("click", function(){ set("inside"); });
-  vOut.addEventListener("click", function(){ set("outside"); });
-  set("inside");
 </script>
 
 </body>

@@ -1,0 +1,14 @@
+{
+  "name": "homelab-site",
+  "private": true,
+  "description": "Build tooling for docs/ — the page itself is static and needs none of this to run.",
+  "type": "module",
+  "scripts": {
+    "vendor": "esbuild scripts/anime-entry.js --bundle --format=esm --minify --outfile=docs/vendor/anime-subset.min.js",
+    "fonts": "node scripts/subset-fonts.mjs"
+  },
+  "devDependencies": {
+    "animejs": "^4.5.0",
+    "esbuild": "^0.25.0"
+  }
+}
