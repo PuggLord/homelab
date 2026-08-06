@@ -1,0 +1,8 @@
+models/
+*.gguf
+*.env
+.env
+secrets/
+*.key
+*.pem
+authorized_keys

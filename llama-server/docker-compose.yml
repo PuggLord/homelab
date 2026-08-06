@@ -1,0 +1,37 @@
+# OpenAI-compatible llama.cpp server, CPU-only.
+#
+# Reachability is the network's job, not the application's. The container binds
+# 0.0.0.0 inside its own namespace; the `ports` mapping below is what decides
+# what the host actually exposes — loopback and the tailnet address, nothing else.
+#
+# Replace 100.x.x.x with this host's Tailscale address. Do NOT substitute
+# 0.0.0.0: the server takes no API key, so the private network IS the
+# authentication.
+#
+# Verify after `docker compose up -d`:
+#   ss -tlnp | grep 8080          -> exactly two LISTEN sockets
+#   curl <lan-ip>:8080            -> connection refused
+
+services:
+  llama-server:
+    image: ghcr.io/ggml-org/llama.cpp:server
+    container_name: llama-server
+    command: >
+      -hf bartowski/Dolphin3.0-Llama3.1-8B-GGUF:Q5_K_M
+      --host 0.0.0.0
+      --port 8080
+      -c 16384
+      -t 8
+      --metrics
+    ports:
+      - "127.0.0.1:8080:8080"
+      - "100.x.x.x:8080:8080"
+    volumes:
+      # NOTE: `-hf` downloads into the HuggingFace cache, not the llama.cpp one,
+      # so this mount is currently unused and the ~5.7GB GGUF sits in the
+      # container's writable layer. Mounting ./models:/root/.cache/huggingface
+      # instead would persist it across a recreate. See README, "What I would
+      # do differently".
+      - ./models:/root/.cache/llama.cpp
+    mem_limit: 8g
+    restart: unless-stopped
