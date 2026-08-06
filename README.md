@@ -11,7 +11,36 @@ than firewalled.
 This is the write-up of how it is built and — more usefully — the six things that
 broke and what each one taught me.
 
-![Proxmox dashboard](docs/proxmox.jpg)
+```mermaid
+flowchart LR
+  subgraph internet [" "]
+    laptop["laptop<br/><i>anywhere</i>"]
+  end
+
+  subgraph tailnet ["Tailscale tailnet — WireGuard mesh"]
+    direction TB
+    subgraph house ["home LAN · no forwarded ports"]
+      direction TB
+      pve["<b>pve</b><br/>Dell OptiPlex 3080<br/>i5-10500T · 31 GB<br/>Proxmox VE 9.1.1"]
+      vm["<b>dockerser1</b><br/>Debian 13 VM<br/>16 GB · 8 cores"]
+      llama["llama-server :8080<br/><i>loopback + tailnet only</i>"]
+      clip["Auto-Clipper AI :8000"]
+      port["Portainer :9443"]
+      pve --> vm
+      vm --> llama
+      vm --> clip
+      vm --> port
+    end
+  end
+
+  laptop -.->|encrypted mesh| pve
+  laptop -.-> llama
+
+  classDef box fill:#eef2fb,stroke:#3b5ba8,stroke-width:1px,color:#16181d;
+  classDef edge fill:#f7f8fa,stroke:#9aa1ae,stroke-width:1px,color:#16181d;
+  class pve,vm,llama,clip,port box;
+  class laptop edge;
+```
 
 ---
 
