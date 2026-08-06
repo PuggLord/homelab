@@ -44,10 +44,8 @@ const COPY = {
 // The link is the one thing that crosses the wall, so it is the one thing
 // that has to physically retract when the wall closes.
 const linkDraw = svg.createDrawable('#link');
-let state = 'inside';
 
 function setState(next, animated = true) {
-  state = next;
   const out = next === 'outside';
   const d   = animated && !REDUCED ? 1 : 0;
 
@@ -108,7 +106,17 @@ if (!REDUCED) {
   // Absolute positions, so the sequence reads the same whatever anime does
   // with relative offsets. Roughly 3.4s end to end.
   whenSeen($('#stage'), () => {
-    createTimeline({ defaults: { duration: 640 } })
+    createTimeline({
+      defaults: { duration: 640 },
+      // The one ambient loop on the page, started by the sequence that precedes
+      // it rather than by a timer set to the sequence's length, which would
+      // drift the moment any duration above changes. It says a single true
+      // thing: this link is carrying something, and it is the only one that is.
+      onComplete: () => {
+        animate('#link-pulse', { opacity: 0.5, duration: 500 });
+        animate('#link-pulse', { strokeDashoffset: [0, -24], duration: 1600, ease: 'linear', loop: true });
+      }
+    })
       .add('#l-out text',    { opacity: [0, 1], duration: 700, ease: 'out(2)' },   0)
       .add([draw[0]],        { ...DRAW, duration: 620 },                         180)  // the shelf
       .add('#l-shelf .lb',   label,                                              560)
@@ -129,13 +137,6 @@ if (!REDUCED) {
         opacity: 1, scale: 1, duration: 760, delay: stagger(80),
         ease: createSpring({ stiffness: 170, damping: 13 })
       },                                                                        3320);
-
-    // The one ambient loop on the page. It says a single true thing: this
-    // link is carrying something right now, and it is the only one that is.
-    setTimeout(() => {
-      animate('#link-pulse', { opacity: 0.5, duration: 500 });
-      animate('#link-pulse', { strokeDashoffset: [0, -24], duration: 1600, ease: 'linear', loop: true });
-    }, 3500);
   }, '0px 0px -12% 0px');
 
   /* -- each incident arrives as it is reached -- */
@@ -189,11 +190,3 @@ if (spine && items.length === incs.length && items.length) {
   }, { threshold: 0 });
   gate.observe($('#stage'));
 }
-
-// Clicking a mark on the drawing goes to the seam it names.
-marks.forEach(mk => {
-  mk.addEventListener('click', () => {
-    const t = $('#seam-' + mk.dataset.n);
-    if (t) t.scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth', block: 'start' });
-  });
-});
