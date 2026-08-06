@@ -24,6 +24,14 @@ const whenSeen = (el, fn, margin = '0px 0px -14% 0px') => {
   io.observe(el);
 };
 
+// This file arrives after the hero image, which is long enough for someone to
+// have scrolled somewhere. Anything already on screen is left alone rather than
+// hidden and re-revealed, because that reads as a glitch, not an entrance.
+const onScreen = el => {
+  const r = el.getBoundingClientRect();
+  return r.top < innerHeight && r.bottom > 0;
+};
+
 /* ------------------------------------------------------------------
    The switch. Its behaviour is the page's whole security model, so it
    is wired first and works whether or not anything below it runs.
@@ -141,6 +149,7 @@ if (!REDUCED) {
 
   /* -- each incident arrives as it is reached -- */
   $$('.inc').forEach(el => {
+    if (onScreen(el)) return;
     const n = $('.inc-n', el);
     utils.set(el, { opacity: 0, translateY: 22 });
     utils.set(n, { scale: 0.4, opacity: 0 });
@@ -184,9 +193,38 @@ if (spine && items.length === incs.length && items.length) {
   }, { rootMargin: '-25% 0px -55% 0px' });
   incs.forEach(el => io.observe(el));
 
-  // it only means anything once the drawing it keys to is behind you
-  const gate = new IntersectionObserver(([e]) => {
-    spine.classList.toggle('live', e.boundingClientRect.top < 0 && !e.isIntersecting);
-  }, { threshold: 0 });
-  gate.observe($('#stage'));
+  // It means something only between the drawing it keys to and the end of the
+  // entries it indexes. Before that there is nothing to track, and after it the
+  // page has moved on, so a lit marker beside the closing photograph is a
+  // leftover rather than a position.
+  let past = false, within = false;
+  const gate = () => spine.classList.toggle('live', past && within);
+
+  new IntersectionObserver(([e]) => {
+    past = e.boundingClientRect.top < 0 && !e.isIntersecting;
+    gate();
+  }, { threshold: 0 }).observe($('#stage'));
+
+  // the same band the tracker below reads from, so the spine is visible exactly
+  // when there is an entry for it to be pointing at and not a moment longer
+  new IntersectionObserver(([e]) => { within = e.isIntersecting; gate(); },
+    { rootMargin: '-25% 0px -55% 0px' }).observe($('.index'));
+}
+
+/* ------------------------------------------------------------------
+   The close. The photograph settles the way the opening plate does,
+   because they are the same machine and the page is bracketing it.
+------------------------------------------------------------------ */
+if (!REDUCED && !onScreen($('.close'))) {
+  const close = $('.close');
+  utils.set('.daylight img', { scale: 1.06 });
+  utils.set('.payoff, .payoff-p, .still', { opacity: 0, translateY: 18 });
+
+  whenSeen(close, () => {
+    animate('.daylight img', { scale: 1, duration: 2400, ease: 'out(2)' });
+    createTimeline({ defaults: { ease: 'out(3)', duration: 780 } })
+      .add('.payoff',   { opacity: 1, translateY: 0 }, 120)
+      .add('.payoff-p', { opacity: 1, translateY: 0 }, 260)
+      .add('.still',    { opacity: 1, translateY: 0 }, 420);
+  }, '0px 0px -18% 0px');
 }

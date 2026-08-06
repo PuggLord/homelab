@@ -204,12 +204,36 @@
   pre b{font-weight:500;color:var(--bone)}
 
   /* ---------- closing ---------- */
-  .close{padding-block:3rem 5rem}
-  .close figure{margin:0 0 2rem}
-  .close img{width:100%;height:auto;display:block;border-radius:var(--r)}
-  .close figcaption{font-size:15px;color:var(--bone-3);margin-top:.75rem;max-width:32rem}
-  .out{border-top:1px solid var(--line);padding-top:1.5rem;font-size:15px;color:var(--bone-3)}
-  .out a{display:inline-block;margin-top:.3rem}
+  .close{padding-block:4rem 0}
+  /* full bleed, and the only other one on the page besides the opening plate */
+  .daylight{position:relative;margin:0 0 3rem;overflow:hidden}
+  .daylight img{width:100%;height:auto;display:block;max-height:62vh;object-fit:cover;object-position:center 46%}
+  .daylight::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(180deg,var(--room) 0%,rgba(14,12,10,.62) 9%,
+      rgba(14,12,10,.24) 26%,rgba(14,12,10,.20) 56%,rgba(14,12,10,.86) 92%,var(--room) 100%);
+  }
+  .payoff{font-size:clamp(23px,2.6vw,30px);line-height:1.3;margin:0 0 1.1rem;max-width:20ch}
+  .payoff-p{font-size:17px;color:var(--bone-2);max-width:35rem}
+
+  .still{margin:3rem 0 0;border-top:1px solid var(--line);padding-top:1.6rem}
+  .still h3{font-size:17px;color:var(--bone-3);font-family:Hanken,sans-serif;font-weight:500;margin:0 0 1.1rem}
+  .still-i{
+    display:grid;grid-template-columns:1.6rem minmax(0,1fr);gap:0 1rem;
+    text-decoration:none;color:var(--bone-2);padding:.7rem 0;align-items:start;
+  }
+  /* the same amber mark it carries on the drawing, so the number means one thing */
+  .still-i b{
+    width:1.35rem;height:1.35rem;border-radius:50%;background:var(--amber);color:var(--room);
+    font-size:12px;font-weight:500;display:grid;place-items:center;margin-top:.15rem;
+  }
+  .still-i span{font-size:15.5px;line-height:1.6}
+  .still-i:hover span{color:var(--bone)}
+
+  .out{border-top:1px solid var(--line);margin-top:2.6rem;padding:1.5rem 0 5rem;font-size:15px;color:var(--bone-3)}
+  .out p{margin:0 0 .9rem;max-width:33rem}
+  .repo{display:inline-block;border-bottom:1px solid var(--cold-dim);text-decoration:none;padding-bottom:1px}
+  .repo:hover{border-bottom-color:var(--cold)}
 
   @media (max-width:34rem){
     body{font-size:16px}
@@ -444,15 +468,41 @@ qm start 100</pre>
   </div>
 </section>
 
-<section class="close col">
-  <figure>
-    <img src="hardware.webp" alt="The same computer in daylight, on a wooden shelf beside its power supply and two Minecraft ore block lamps." width="960" height="1280" loading="lazy">
-    <figcaption>The whole estate, in daylight. A small desktop on a shelf, next to two Minecraft ore blocks.</figcaption>
+<section class="close">
+  <!-- The page opens on the machine at night, where you can barely see it, and
+       closes on the same machine in daylight, where you can see it perfectly and
+       still cannot see any of what went wrong. That is the whole argument. -->
+  <figure class="daylight">
+    <img src="img/daylight-1200.webp"
+         srcset="img/daylight-760.webp 760w, img/daylight-1200.webp 1200w, img/daylight-1600.webp 1600w"
+         sizes="100vw" width="1200" height="800" loading="lazy" decoding="async"
+         alt="The same computer photographed in daylight, lying on a wooden shelf beside its coiled power cable, with two Minecraft ore blocks on the shelf next to it.">
   </figure>
-  <div class="out">
-    Written by Jacob Manis while running it.
-    Addresses in the drawing and in the repository are placeholders.
-    <a href="https://github.com/PuggLord/homelab">Compose files and the full write up on GitHub</a>
+
+  <div class="col">
+    <h2 class="payoff">Here it is with the lights on.</h2>
+    <p class="payoff-p">
+      Not one of the six is visible from this angle. Not the processor the guest was
+      handed, not the flag nobody set, not the disk that was actually being written
+      to, not the policy sitting in an admin console somewhere else, not the filter
+      on a laptop that was in another state at the time. For a fortnight this is
+      exactly what it looked like, and it was doing nothing at all.
+    </p>
+
+    <div class="still">
+      <h3>Two of the six are still open</h3>
+      <a class="still-i" href="#seam-2"><b>2</b><span>The firmware setting that powers it back on after an outage. There is no
+        management controller, so it is a change made at the machine, and the machine
+        is on a shelf in a living room.</span></a>
+      <a class="still-i" href="#seam-4"><b>4</b><span>The container runtime still writes to the small disk. Nothing about that has
+        changed since the day it filled.</span></a>
+    </div>
+
+    <div class="out">
+      <p>Written by Jacob Manis, while running it. Addresses in the drawing and in the
+         repository are placeholders.</p>
+      <a class="repo" href="https://github.com/PuggLord/homelab">Compose files and the full write up on GitHub</a>
+    </div>
   </div>
 </section>
 

@@ -56,7 +56,7 @@ flowchart LR
 Two disks on the VM, and the split matters: a 30 GB root where Docker keeps
 `/var/lib/docker`, and a 196 GB data volume. More on why that bit me below.
 
-![Hardware](docs/hardware.jpg)
+![The machine on its shelf](docs/hardware.webp)
 
 ## The network decision
 
