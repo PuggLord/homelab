@@ -279,8 +279,20 @@ what changed, not with what is complicated.
 ```
 llama-server/
   docker-compose.yml    the model server, bound to loopback + tailnet only
-docs/                   screenshots
+docs/                   the page at pugglord.github.io/homelab, and its assets
+  app.js                the animation, loaded after the hero image has landed
+  vendor/               anime.js, bundled down to the seven imports used
+fonts-full/             the unsubset webfonts, kept so the subset is reproducible
+scripts/                how vendor/ and docs/fonts/ are generated
 ```
+
+`docs/vendor/anime-subset.min.js` is **not** the stock anime.js build. It is
+`npm run vendor`, which bundles `scripts/anime-entry.js` and lets esbuild drop
+everything the page never calls, taking 119 KB to 55 KB. Likewise
+`docs/fonts/*.woff2` are subsets produced by `npm run fonts` from `fonts-full/`.
+Neither is needed to read the page; both exist because the animation code and
+the fonts otherwise arrive at the same moment as the photograph and push the
+largest paint past two and a half seconds on a slow connection.
 
 Addresses in this repo are placeholders. The architecture is the point; my
 particular tailnet addressing is not.
