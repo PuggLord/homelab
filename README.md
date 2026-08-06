@@ -3,6 +3,8 @@
 A Dell OptiPlex running Proxmox, a Debian VM on top of it, and a language model
 served from my house that nothing on the public internet can reach.
 
+**Read it as a page: [pugglord.github.io/homelab](https://pugglord.github.io/homelab/)**
+
 No ports are forwarded. There is no reverse proxy, no dynamic DNS, no
 `0.0.0.0` bind anywhere in the stack. Every service is reachable from my laptop
 in another state and from nowhere else, because the network is private rather
