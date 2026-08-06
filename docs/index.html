@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>homelab — a private LLM, and six things that broke</title>
+<meta name="description" content="A Proxmox host, a Debian VM, and a language model served from my house that nothing on the public internet can reach. Plus the six failures that taught me the most.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='13'>🖧</text></svg>">
+<style>
+  :root {
+    color-scheme: light;
+    --ground:  #faf8f6;
+    --panel:   #ffffff;
+    --sunk:    #f2eeea;
+    --ink:     #1a1613;
+    --ink-2:   #46403a;
+    --muted:   #7d746b;
+    --rule:    #e4ddd5;
+    --accent:  #b4451f;
+    --accent-w:#fbeee8;
+    --term-bg: #221d19;
+    --term-fg: #e8e0d6;
+    --term-dim:#9b9086;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --ground:  #15120f;
+      --panel:   #1c1815;
+      --sunk:    #221d19;
+      --ink:     #f4efe9;
+      --ink-2:   #cec5ba;
+      --muted:   #968b7f;
+      --rule:    #2f2822;
+      --accent:  #e8834f;
+      --accent-w:#2a1d14;
+      --term-bg: #0f0d0b;
+      --term-fg: #e8e0d6;
+      --term-dim:#8a8078;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --ground:  #15120f;
+    --panel:   #1c1815;
+    --sunk:    #221d19;
+    --ink:     #f4efe9;
+    --ink-2:   #cec5ba;
+    --muted:   #968b7f;
+    --rule:    #2f2822;
+    --accent:  #e8834f;
+    --accent-w:#2a1d14;
+    --term-bg: #0f0d0b;
+    --term-fg: #e8e0d6;
+    --term-dim:#8a8078;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+  body {
+    margin: 0; background: var(--ground); color: var(--ink-2);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 17px; line-height: 1.65; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 46rem; margin: 0 auto; padding: 0 1.5rem; }
+  a { color: var(--accent); }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  /* ---------- hero ---------- */
+  header { padding: clamp(3.5rem, 9vw, 7rem) 0 3rem; border-bottom: 1px solid var(--rule); }
+  .kicker {
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+    font-size: .75rem; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 1.25rem;
+  }
+  h1 {
+    font-size: clamp(2rem, 6vw, 3.25rem); line-height: 1.05; margin: 0 0 1.5rem;
+    letter-spacing: -.03em; color: var(--ink); font-weight: 700; text-wrap: balance;
+  }
+  .thesis { font-size: clamp(1.0625rem, 2.4vw, 1.25rem); margin: 0 0 1.5rem; max-width: 34rem; }
+  .thesis strong { color: var(--ink); font-weight: 620; }
+  .spec {
+    display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; margin: 2rem 0 0;
+    font-family: ui-monospace, Consolas, monospace; font-size: .8125rem; color: var(--muted);
+  }
+  .spec span { white-space: nowrap; }
+  .spec b { color: var(--ink-2); font-weight: 500; }
+
+  /* ---------- sections ---------- */
+  section { padding: 3.5rem 0; border-bottom: 1px solid var(--rule); }
+  h2 {
+    font-size: clamp(1.375rem, 3.5vw, 1.75rem); line-height: 1.2; letter-spacing: -.02em;
+    color: var(--ink); margin: 0 0 1.25rem; font-weight: 680; text-wrap: balance;
+  }
+  h3 { font-size: 1.0625rem; color: var(--ink); margin: 2rem 0 .5rem; font-weight: 650; }
+  p { margin: 0 0 1.15rem; }
+  p:last-child { margin-bottom: 0; }
+  .lead { font-size: 1.0625rem; }
+  ul { margin: 0 0 1.15rem; padding-left: 1.25rem; }
+  li { margin-bottom: .5rem; }
+  code {
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+    font-size: .8125em; background: var(--sunk); padding: .12em .38em;
+    border-radius: 3px; color: var(--ink);
+  }
+
+  /* ---------- terminal ---------- */
+  .term {
+    background: var(--term-bg); color: var(--term-fg); border-radius: 5px;
+    padding: 1.125rem 1.25rem; margin: 1.5rem 0; overflow-x: auto;
+    font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+    font-size: .8125rem; line-height: 1.75; tab-size: 2;
+  }
+  .term pre { margin: 0; }
+  .term .c { color: var(--term-dim); }
+  .term .p { color: #e8834f; }
+  .term .g { color: #86b783; }
+  .term .r { color: #e07a6a; }
+
+  /* ---------- architecture ---------- */
+  .arch {
+    background: var(--panel); border: 1px solid var(--rule); border-radius: 5px;
+    padding: 1.75rem 1.5rem; margin: 1.75rem 0;
+  }
+  .tier { display: flex; flex-direction: column; gap: .625rem; }
+  .node {
+    border: 1px solid var(--rule); border-radius: 4px; padding: .75rem .9375rem;
+    background: var(--ground);
+  }
+  .node.host { border-left: 3px solid var(--accent); }
+  .node .n {
+    font-family: ui-monospace, Consolas, monospace; font-size: .875rem;
+    color: var(--ink); font-weight: 600;
+  }
+  .node .d { font-size: .8125rem; color: var(--muted); margin-top: .125rem; }
+  .nest { margin-left: clamp(.75rem, 3vw, 1.75rem); padding-left: 1rem; border-left: 1px dashed var(--rule); }
+  .band {
+    font-family: ui-monospace, Consolas, monospace; font-size: .6875rem;
+    letter-spacing: .09em; text-transform: uppercase; color: var(--muted);
+    margin: 0 0 .625rem;
+  }
+  .band.acc { color: var(--accent); }
+
+  /* ---------- failures ---------- */
+  .fail { padding: 2rem 0; border-top: 1px solid var(--rule); }
+  .fail:first-of-type { border-top: none; padding-top: .5rem; }
+  .fail-head { display: flex; gap: 1rem; align-items: baseline; }
+  .num {
+    font-family: ui-monospace, Consolas, monospace; font-size: .875rem;
+    color: var(--accent); font-weight: 700; flex: none; padding-top: .15rem;
+  }
+  .fail h3 { margin: 0 0 .75rem; font-size: 1.125rem; }
+  .rows { margin: 1rem 0 0; display: flex; flex-direction: column; gap: .625rem; }
+  .row { display: grid; grid-template-columns: 5.5rem 1fr; gap: .875rem; align-items: start; }
+  .row dt {
+    font-family: ui-monospace, Consolas, monospace; font-size: .6875rem;
+    letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+    padding-top: .28rem;
+  }
+  .row dd { margin: 0; font-size: .9375rem; }
+  .row.lesson dt { color: var(--accent); }
+  .row.lesson dd { color: var(--ink); }
+  @media (max-width: 34rem) {
+    .row { grid-template-columns: 1fr; gap: .1rem; }
+    .row dt { padding-top: 0; }
+  }
+
+  figure { margin: 2rem 0; }
+  figure img { width: 100%; height: auto; border-radius: 5px; display: block; border: 1px solid var(--rule); }
+  figcaption { font-size: .8125rem; color: var(--muted); margin-top: .625rem; }
+
+  footer { padding: 3rem 0 5rem; font-size: .875rem; color: var(--muted); }
+  .cta {
+    display: inline-block; margin: .5rem 0 1.5rem; padding: .6875rem 1.125rem;
+    border: 1px solid var(--accent); border-radius: 4px; color: var(--accent);
+    text-decoration: none; font-size: .9375rem; font-weight: 600;
+  }
+  .cta:hover { background: var(--accent-w); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <p class="kicker">homelab</p>
+    <h1>A language model served from my house that nothing on the internet can reach</h1>
+    <p class="thesis">
+      No forwarded ports. No reverse proxy, no dynamic DNS, no <code>0.0.0.0</code> bind
+      anywhere in the stack. Every service answers from my laptop in another state and
+      from <strong>nowhere else</strong> — because the network is private rather than
+      firewalled.
+    </p>
+    <p class="thesis">
+      The build is the short half. The longer half is six failures and what each one cost.
+    </p>
+    <div class="spec">
+      <span><b>Proxmox VE</b> 9.1.1</span>
+      <span><b>Debian 13</b> VM</span>
+      <span><b>llama.cpp</b> 8B Q5_K_M</span>
+      <span><b>Tailscale</b> WireGuard mesh</span>
+      <span><b>i5-10500T</b> · 31 GB</span>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2>The network decision</h2>
+    <p class="lead">
+      The usual way to reach a home server from outside is to forward a port on the
+      router. That publishes a service to the entire internet and makes its
+      authentication the only thing standing between strangers and the box.
+    </p>
+    <p>
+      I used a WireGuard mesh instead. Every device gets a stable private address and can
+      only talk to devices in the same tailnet. The router forwards nothing — from the
+      public internet the house has no open ports at all.
+    </p>
+    <p>Two consequences worth stating plainly:</p>
+    <ul>
+      <li><strong>Addresses stop moving.</strong> The mesh address is stable regardless of
+        what the ISP does to the WAN IP or DHCP does to the LAN.</li>
+      <li><strong>Services can be bound narrowly.</strong> Because access control is the
+        network's job, a service does not need to listen broadly to be reachable remotely.</li>
+    </ul>
+
+    <div class="arch">
+      <p class="band acc">tailnet · encrypted mesh</p>
+      <div class="tier">
+        <div class="node"><div class="n">laptop</div><div class="d">anywhere in the world</div></div>
+        <p class="band" style="margin:.375rem 0 0">home LAN · no forwarded ports</p>
+        <div class="node host"><div class="n">pve</div><div class="d">Dell OptiPlex 3080 · Proxmox VE 9.1.1 · the hypervisor</div></div>
+        <div class="nest">
+          <div class="tier">
+            <div class="node host"><div class="n">dockerser1</div><div class="d">Debian 13 VM · 16 GB · 8 cores</div></div>
+            <div class="nest">
+              <div class="tier">
+                <div class="node"><div class="n">llama-server :8080</div><div class="d">loopback + tailnet only</div></div>
+                <div class="node"><div class="n">auto-clipper :8000</div><div class="d">FastAPI video service</div></div>
+                <div class="node"><div class="n">portainer :9443</div><div class="d">container management</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3>The model server is narrower still</h3>
+    <p>
+      It publishes on exactly two sockets — loopback and the mesh address. Not
+      <code>0.0.0.0</code>. Not the LAN, not the IPv6 interface, not any other tunnel the
+      box happens to have up. Verified rather than assumed:
+    </p>
+    <div class="term"><pre><span class="c">$</span> ss -tlnp | grep 8080
+LISTEN 0 4096 <span class="g">127.0.0.1:8080</span>   ...
+LISTEN 0 4096 <span class="g">100.x.x.x:8080</span>   ...
+
+<span class="c">$</span> curl 192.168.1.x:8080   <span class="c"># from another machine on the LAN</span>
+curl: (7) <span class="r">Failed to connect — Connection refused</span></pre></div>
+    <p>
+      An open model endpoint with no API key is fine when the network is the
+      authentication. It would be reckless on <code>0.0.0.0</code>.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Six things that broke</h2>
+    <p class="lead">The setup is the boring part. This is the part I would want to read.</p>
+
+    <div class="fail">
+      <div class="fail-head"><span class="num">01</span><div>
+        <h3>The CPU the VM had was not the CPU the host had</h3>
+        <dl class="rows">
+          <div class="row"><dt>Symptom</dt><dd><code>llama.cpp</code> refused to run. It needs AVX2.</dd></div>
+          <div class="row"><dt>Cause</dt><dd>Proxmox defaults a VM to a <em>virtual</em> CPU model (<code>x86-64-v2-AES</code>) which does not expose AVX2, even though the physical i5-10500T underneath has it.</dd></div>
+          <div class="row"><dt>Twist</dt><dd><code>qm set 100 --cpu host</code> still did nothing. A <code>reboot</code> inside the guest never leaves the same <code>qemu</code> process, and the emulated hardware is fixed when that process starts. It needed <code>qm shutdown</code> then <code>qm start</code>.</dd></div>
+          <div class="row lesson"><dt>Lesson</dt><dd>"Restart it" is ambiguous on a VM. Restarting the OS and restarting the machine are different operations, and anything about emulated hardware needs the second one.</dd></div>
+        </dl>
+      </div></div>
+    </div>
+
+    <div class="fail">
+      <div class="fail-head"><span class="num">02</span><div>
+        <h3>Proxmox came back from a power cut. The VM did not.</h3>
+        <dl class="rows">
+          <div class="row"><dt>Symptom</dt><dd>Docker unreachable for about two weeks. The hypervisor looked completely healthy.</dd></div>
+          <div class="row"><dt>Cause</dt><dd>The VM's <code>onboot</code> flag was unset, so <code>pve</code> started and left the guest off.</dd></div>
+          <div class="row lesson"><dt>Lesson</dt><dd>Autostart is not a default, and a healthy hypervisor tells you nothing about whether the things on it are running. Every layer reported itself fine, because every layer <em>was</em> fine — nothing owned starting the next layer up. Test recovery by actually cutting power, not by reasoning about it.</dd></div>
+        </dl>
+      </div></div>
+    </div>
+
+    <div class="fail">
+      <div class="fail-head"><span class="num">03</span><div>
+        <h3>Locked out, with no console, no key, and no agent</h3>
+        <dl class="rows">
+          <div class="row"><dt>Symptom</dt><dd>Recovering from #2 meant logging into a VM whose password I had forgotten, with no SSH key installed and no guest agent running. Nothing to talk to.</dd></div>
+          <div class="row"><dt>Fix</dt><dd>The hypervisor can edit a guest's disk while the guest is off.</dd></div>
+        </dl>
+        <div class="term"><pre><span class="c">$</span> qm stop 100
+<span class="c">$</span> LIBGUESTFS_BACKEND=direct virt-customize -a /dev/pve/vm-100-disk-0 \
+    --ssh-inject user:file:/path/to/id_ed25519.pub
+<span class="c">$</span> qm start 100</pre></div>
+        <dl class="rows">
+          <div class="row lesson"><dt>Lesson</dt><dd>On hardware with no BMC or IPMI — which is most consumer hardware — the hypervisor <em>is</em> the out-of-band management path. Worth knowing before you need it, because you cannot look it up from inside the machine you are locked out of.</dd></div>
+        </dl>
+      </div></div>
+    </div>
+
+    <div class="fail">
+      <div class="fail-head"><span class="num">04</span><div>
+        <h3>A throwaway container filled the root disk</h3>
+        <dl class="rows">
+          <div class="row"><dt>Symptom</dt><dd>A test container grew to 5.47 GB and took <code>/</code> to 100%. Builds inside it started failing with errors that had nothing to do with disk.</dd></div>
+          <div class="row"><dt>Cause</dt><dd>The VM has 196 GB free on <code>/mnt/data</code>. None of it was in play: Docker's <code>data-root</code> is <code>/var/lib/docker</code> on the <strong>30 GB</strong> root disk, which already sits near 85% with the model, a notebook image and Auto-Clipper on it.</dd></div>
+          <div class="row lesson"><dt>Lesson</dt><dd>Know which filesystem your container runtime writes to. Space existing on the machine is not the same as space being available to the thing that needs it.</dd></div>
+        </dl>
+      </div></div>
+    </div>
+
+    <div class="fail">
+      <div class="fail-head"><span class="num">05</span><div>
+        <h3><code>no rules matched</code></h3>
+        <dl class="rows">
+          <div class="row"><dt>Symptom</dt><dd>Remote SSH stopped working. <code>sshd</code> bound correctly, firewall disabled, <code>iptables</code> on ACCEPT. The box was fine.</dd></div>
+        </dl>
+        <div class="term"><pre><span class="c">$</span> journalctl -u tailscaled | tail
+<span class="r">Drop: TCP{laptop &gt; pve:22} no rules matched</span></pre></div>
+        <dl class="rows">
+          <div class="row"><dt>Cause</dt><dd>The tailnet policy was denying it. Tailscale has two policy syntaxes — legacy <code>acls</code> and modern <code>grants</code> — and a file is one or the other, never both. In <code>grants</code>, <code>dst</code> is hosts or identities and ports live in a separate <code>ip</code> field; legacy <code>acls</code> combines them as <code>host:port</code>. Mixing the shapes silently produces a policy that matches nothing.</dd></div>
+          <div class="row lesson"><dt>Lesson</dt><dd>When a connection dies and both endpoints look healthy, something in between is making a policy decision. Find its log before touching either end.</dd></div>
+        </dl>
+      </div></div>
+    </div>
+
+    <div class="fail">
+      <div class="fail-head"><span class="num">06</span><div>
+        <h3>The VPN, which took three attempts to diagnose</h3>
+        <dl class="rows">
+          <div class="row"><dt>Symptom</dt><dd><code>ping</code> to a LAN address succeeded, and <em>every</em> TCP port to <em>every</em> host — 22, 8000, 8006, 9443 — timed out. Both machines, LAN and mesh addresses alike.</dd></div>
+          <div class="row"><dt>Cause</dt><dd>My laptop's VPN kill-switch, defending itself in four layers, each masking the next: "allow local network" silently stopped applying after a relay change; lockdown mode kept blocking after disconnect; split tunnelling had <code>ssh.exe</code> excluded, which <em>blackholes</em> SSH specifically when the tunnel is down while ping keeps working; and residual WFP filters kept blocking even after all three were off. Only fully quitting the client flushed them.</dd></div>
+          <div class="row lesson"><dt>Lesson</dt><dd>"Ping works but nothing connects" is a filter signature, not a routing one. On Windows the filter can outlive the process that installed it. Also: the client was on the far end of every failed connection, and I checked it last. Start with what changed, not with what is complicated.</dd></div>
+        </dl>
+      </div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>What I would do differently</h2>
+    <ul>
+      <li><strong>Move Docker's <code>data-root</code> to the big volume.</strong> #4 will
+        happen again otherwise; nothing has actually changed.</li>
+      <li><strong>Fix the model cache mount.</strong> The compose file mounts a directory
+        for the model, but <code>-hf</code> downloads to the HuggingFace cache path instead,
+        so the mount is unused and the weights live in the container's writable layer. It
+        survives restarts, but a recreate re-downloads ~5.7 GB.</li>
+      <li><strong>Set BIOS AC recovery to power on.</strong> The OptiPlex has no BMC, so
+        this is a physical, at-the-machine change. Until it happens, every power cut needs
+        hands on the box.</li>
+    </ul>
+
+    <figure>
+      <img src="hardware.jpg" alt="A Dell OptiPlex Micro sitting on a wooden shelf beside its power brick and two Minecraft ore-block lamps.">
+      <figcaption>The whole thing. A Dell OptiPlex Micro on a shelf, next to two Minecraft ore blocks.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <a class="cta" href="https://github.com/PuggLord/homelab">Source and compose files on GitHub →</a>
+    <p>
+      Built and run by <a href="https://github.com/PuggLord">Jacob Manis</a>.
+      Addresses on this page are placeholders — the architecture is the point.
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>
