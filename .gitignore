@@ -6,3 +6,5 @@ secrets/
 *.key
 *.pem
 authorized_keys
+.claude-flow/
+.claude/
